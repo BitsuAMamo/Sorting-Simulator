@@ -4,7 +4,7 @@ import pygame
 import random
 from typing import List
 from pygame.time import Clock, delay
-from threading import Thread
+from threading import Thread, Lock
 
 # CONSTANTS
 
@@ -32,6 +32,7 @@ class Visualizer:
         self.scale_h = self.height/max(*self.array)
         self.delay = delay
         self.color_array = color_array
+        self.update_lock = Lock()
 
 
     def draw_element(self, index, color):
@@ -42,27 +43,28 @@ class Visualizer:
 
 
     def draw_array(self, index = -1):
-        self.window.fill(EMPTY)
-        self.draw_bg(BLACK)
-        for i in range(len(self.array)):
-            if index == i:
-                color = PURPLE
-            else:
-                color = self.color_array[(i % len(self.color_array)) - 1]
-            self.draw_element(i, color)
+        with self.update_lock:
+            self.window.fill(EMPTY)
+            self.draw_bg(BLACK)
+            for i in range(len(self.array)):
+                if index == i:
+                    color = PURPLE
+                else:
+                    color = self.color_array[(i % len(self.color_array)) - 1]
+                self.draw_element(i, color)
 
 
     # Overlaoded array for the quck sort
     # TODO: Find better way to implement it. Kaleab says so!!
-    def draw_array(self, low = -1, high = -1):
-        self.window.fill(EMPTY)
-        self.draw_bg(BLACK)
-        for i in range(len(self.array)):
-            if i in range(low, high + 1):#low == i or high == i:
-                color = PURPLE
-            else:
-                color = self.color_array[(i % len(self.color_array)) - 1]
-            self.draw_element(i, color)
+    # def draw_array(self, low = -1, high = -1):
+    #     self.window.fill(EMPTY)
+    #     self.draw_bg(BLACK)
+    #     for i in range(len(self.array)):
+    #         if i in range(low, high + 1):#low == i or high == i:
+    #             color = PURPLE
+    #         else:
+    #             color = self.color_array[(i % len(self.color_array)) - 1]
+    #         self.draw_element(i, color)
 
 
     # Fuction to draw background
@@ -145,11 +147,9 @@ class Visualizer:
             # Separately sort elements before
             # partition and after partition
             # self.draw_array()
+            self.quick_sort(low, pi-1)
+            self.quick_sort(pi+1, high)
             self.draw_array()
-            self.quickSort(low, pi-1)
-            self.draw_array(low, high)
-            self.quickSort(pi+1, high)
-            self.draw_array(low, high)
             delay(self.delay)
         print(self.array)
 
@@ -166,7 +166,10 @@ class Visualizer:
 
     def update(self):
         while self.run:
-            pygame.display.update()
+            # self.draw_array()
+            with self.update_lock:
+                pygame.display.update()
+            delay(int(1000/FPS))
 
     def get_color(self):
         return WHITE
@@ -174,6 +177,6 @@ class Visualizer:
 
 if __name__ == '__main__':
     win = pygame.display.set_mode((WIDTH, HEIGHT))
-    vis = Visualizer(win, 35, 100, 250)
-    vis.visualize(vis.quick_sort)
-    delay(5000)
+    vis = Visualizer(win, 35, 100 , 10)
+    vis.visualize(vis.bubble_sort_visualize)
+    delay(2000)
